@@ -10,6 +10,8 @@ Follow a **DoorDash Drive** tracking link (the `doordash.com/orders/drive?urlCod
 2. Install **DoorDash Tracker**, then restart Home Assistant.
 3. Settings → Devices & Services → **Add Integration** → DoorDash Tracker.
 
+The integration's icon ships in `custom_components/doordash_tracker/brand/` and appears in Home Assistant 2026.3 or later. Older versions show a placeholder.
+
 ## Entities
 
 | Entity | Purpose |
