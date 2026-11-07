@@ -30,6 +30,14 @@ Follow a **DoorDash Drive** tracking link (the `doordash.com/orders/drive?urlCod
 
 [![Import blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2Fthrivestorm2%2Fha-doordash-tracker%2Fblob%2Fmain%2Fblueprints%2Fautomation%2Fdoordash_tracker%2Fvestaboard_note_display.yaml)
 
+**Manual import:** if the button doesn't open your Home Assistant, go to **Settings → Automations & scenes → Blueprints → Import blueprint** and paste this URL:
+
+```
+https://github.com/thrivestorm2/ha-doordash-tracker/blob/main/blueprints/automation/doordash_tracker/vestaboard_note_display.yaml
+```
+
+Or copy the file into your config as `blueprints/automation/doordash_tracker/vestaboard_note_display.yaml`, then reload automations under **Developer tools → YAML**.
+
 **What it shows**, on each status, label or ETA change, for a configurable time (default 3 minutes):
 
 ```
