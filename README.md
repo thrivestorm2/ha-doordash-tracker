@@ -30,7 +30,7 @@ Follow a **DoorDash Drive** tracking link (the `doordash.com/orders/drive?urlCod
 
 [![Import blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2Fthrivestorm2%2Fha-doordash-tracker%2Fblob%2Fmain%2Fblueprints%2Fautomation%2Fdoordash_tracker%2Fvestaboard_note_display.yaml)
 
-**What it shows**, on each status or ETA change, for a configurable time (default 3 minutes):
+**What it shows**, on each status, label or ETA change, for a configurable time (default 3 minutes):
 
 ```
 {63} ETA 12:41 PM{63}
@@ -39,6 +39,8 @@ Follow a **DoorDash Drive** tracking link (the `doordash.com/orders/drive?urlCod
 ```
 
 **Handing the board back:** when the time is up, it re-runs your chosen day or night automation with that automation's own conditions in force.
+
+**ETA rate limit:** an ETA-only change that arrives within the minimum interval (default 120 s) of the last board write is ignored. Status and label changes always go through.
 
 **Exclusions:** any `input_boolean` helpers you list, such as ninja mode, storm alert or a live game, skip the takeover entirely.
 

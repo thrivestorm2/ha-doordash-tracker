@@ -1,7 +1,7 @@
 blueprint:
   name: DoorDash Tracker → Vestaboard Note (temporary takeover)
   description: >-
-    On each DoorDash status/ETA change, shows the update on a Vestaboard Note
+    On each DoorDash status, label or ETA change, shows the update on a Vestaboard Note
     (15×3) for a few minutes, then hands the board back to your regular
     automations. Skipped while any exclusion helper is on.
 
@@ -44,6 +44,19 @@ blueprint:
           min: 1
           max: 30
           unit_of_measurement: min
+    min_eta_interval:
+      name: Minimum time between ETA-only updates (seconds)
+      description: >-
+        An ETA change that arrives sooner than this after the last board write
+        is ignored, so a flapping ETA can't rewrite the board every minute.
+        Status and label changes always update the board.
+      default: 120
+      selector:
+        number:
+          min: 0
+          max: 900
+          step: 30
+          unit_of_measurement: s
     night_start:
       name: Night starts
       default: "22:00:00"
@@ -78,7 +91,13 @@ variables:
   exclusions: !input exclusions
   night_automation: !input night_automation
   day_automation: !input day_automation
+  min_eta_interval: !input min_eta_interval
+  # An unset entity input stays as its default [], a chosen one is a string.
+  has_night_automation: "{{ night_automation is string and night_automation != '' }}"
+  has_day_automation: "{{ day_automation is string and day_automation != '' }}"
 
+# One trigger per sensor update, so a step and label change arriving together
+# writes the board once. The conditions decide whether the update matters.
 trigger:
   - platform: state
     entity_id: !input status_sensor
@@ -88,6 +107,26 @@ condition:
     value_template: "{{ states(status_entity) in ['1', '2', '3', '4'] }}"
   - condition: template
     value_template: "{{ exclusions | select('is_state', 'on') | list | length == 0 }}"
+  # Write only when a field the board shows has changed: always for the step
+  # or label, and for an ETA-only change once min_eta_interval has passed since
+  # the last write. The detail and tracking attributes are ignored. Conditions
+  # run before mode: restart cancels the current run, so a skipped update
+  # leaves the board and the pending restore alone.
+  - condition: template
+    value_template: >-
+      {%- set old = trigger.from_state -%}
+      {%- set new = trigger.to_state -%}
+      {%- if old is none or old.state != new.state
+            or old.attributes.get('label') != new.attributes.get('label') -%}
+        true
+      {%- elif old.attributes.get('eta') != new.attributes.get('eta') -%}
+        {%- set last = this.attributes.get('last_triggered') -%}
+        {{- last is none
+            or (now() - as_datetime(last | string)).total_seconds()
+               >= min_eta_interval | float(0) -}}
+      {%- else -%}
+        false
+      {%- endif -%}
 
 action:
   - action: vestaboard.message
@@ -122,7 +161,7 @@ action:
     then:
       - if:
           - condition: template
-            value_template: "{{ night_automation | string | length > 2 }}"
+            value_template: "{{ has_night_automation }}"
         then:
           - action: automation.trigger
             target:
@@ -132,7 +171,7 @@ action:
     else:
       - if:
           - condition: template
-            value_template: "{{ day_automation | string | length > 2 }}"
+            value_template: "{{ has_day_automation }}"
         then:
           - action: automation.trigger
             target:
