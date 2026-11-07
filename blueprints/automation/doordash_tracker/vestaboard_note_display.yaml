@@ -1,0 +1,141 @@
+blueprint:
+  name: DoorDash Tracker → Vestaboard Note (temporary takeover)
+  description: >-
+    On each DoorDash status/ETA change, shows the update on a Vestaboard Note
+    (15×3) for a few minutes, then hands the board back to your regular
+    automations. Skipped while any exclusion helper is on.
+
+    Row 1: ETA (or DOORDASH) · Row 2: status · Row 3: 4-step progress bar
+    (green = done, yellow = current, white = pending).
+  domain: automation
+  source_url: https://github.com/thrivestorm2/ha-doordash-tracker/blob/main/blueprints/automation/doordash_tracker/vestaboard_note_display.yaml
+  input:
+    status_sensor:
+      name: DoorDash status sensor
+      default: sensor.doordash_tracker_status
+      selector:
+        entity:
+          filter:
+            - integration: doordash_tracker
+              domain: sensor
+    vestaboard_device:
+      name: Vestaboard Note
+      selector:
+        device:
+          filter:
+            - integration: vestaboard
+    exclusions:
+      name: Exclusions
+      description: If any of these are on, the board is left alone.
+      default:
+        - input_boolean.ninja_mode
+        - input_boolean.vestaboard_alert_active
+        - input_boolean.vestaboard_baseball_active
+      selector:
+        entity:
+          multiple: true
+          filter:
+            - domain: input_boolean
+    hold_minutes:
+      name: Display time (minutes)
+      default: 3
+      selector:
+        number:
+          min: 1
+          max: 30
+          unit_of_measurement: min
+    night_start:
+      name: Night starts
+      default: "22:00:00"
+      selector:
+        time: {}
+    night_end:
+      name: Night ends
+      default: "06:00:00"
+      selector:
+        time: {}
+    night_automation:
+      name: Restore at night
+      description: Automation to re-run after the takeover during night hours.
+      default: []
+      selector:
+        entity:
+          filter:
+            - domain: automation
+    day_automation:
+      name: Restore during the day
+      description: Automation to re-run after the takeover outside night hours.
+      default: []
+      selector:
+        entity:
+          filter:
+            - domain: automation
+
+mode: restart
+
+variables:
+  status_entity: !input status_sensor
+  exclusions: !input exclusions
+  night_automation: !input night_automation
+  day_automation: !input day_automation
+
+trigger:
+  - platform: state
+    entity_id: !input status_sensor
+
+condition:
+  - condition: template
+    value_template: "{{ states(status_entity) in ['1', '2', '3', '4'] }}"
+  - condition: template
+    value_template: "{{ exclusions | select('is_state', 'on') | list | length == 0 }}"
+
+action:
+  - action: vestaboard.message
+    data:
+      device_id:
+        - !input vestaboard_device
+      message: >-
+        {%- set R = '{63}' -%}
+        {%- set G = '{66}' -%}
+        {%- set Y = '{65}' -%}
+        {%- set W = '{69}' -%}
+        {%- set step = states(status_entity) | int(0) -%}
+        {%- set label = (state_attr(status_entity, 'label') or 'DOORDASH') | upper -%}
+        {%- set eta = (state_attr(status_entity, 'eta') or '') | upper -%}
+        {%- set top = ('ETA ' ~ eta) if (eta and step < 4) else 'DOORDASH' -%}
+        {%- set row1 = R ~ (top[:13] | center(13)) ~ R -%}
+        {%- set row2 = R ~ (label[:13] | center(13)) ~ R -%}
+        {%- set ns = namespace(bar='') -%}
+        {%- for i in range(1, 5) -%}
+          {%- set c = G if (i < step or step == 4) else (Y if i == step else W) -%}
+          {%- set ns.bar = ns.bar ~ c ~ c ~ c ~ (' ' if i < 4 else '') -%}
+        {%- endfor -%}
+        {{- row1 ~ ' ' ~ row2 ~ ' ' ~ ns.bar -}}
+  - delay:
+      minutes: !input hold_minutes
+  # automation.trigger keeps each automation's own conditions (exclusions,
+  # ownership helpers) in force.
+  - if:
+      - condition: time
+        after: !input night_start
+        before: !input night_end
+    then:
+      - if:
+          - condition: template
+            value_template: "{{ night_automation | string | length > 2 }}"
+        then:
+          - action: automation.trigger
+            target:
+              entity_id: !input night_automation
+            data:
+              skip_condition: false
+    else:
+      - if:
+          - condition: template
+            value_template: "{{ day_automation | string | length > 2 }}"
+        then:
+          - action: automation.trigger
+            target:
+              entity_id: !input day_automation
+            data:
+              skip_condition: false

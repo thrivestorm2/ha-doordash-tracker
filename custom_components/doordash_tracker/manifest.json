@@ -1,0 +1,14 @@
+{
+  "domain": "doordash_tracker",
+  "name": "DoorDash Tracker",
+  "codeowners": ["@thrivestorm2"],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/thrivestorm2/ha-doordash-tracker",
+  "integration_type": "service",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/thrivestorm2/ha-doordash-tracker/issues",
+  "requirements": [],
+  "single_config_entry": true,
+  "version": "0.1.0"
+}
