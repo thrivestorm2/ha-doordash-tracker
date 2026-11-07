@@ -17,7 +17,7 @@ async def async_setup_entry(
 
 class DoorDashStatusSensor(DoorDashEntity, SensorEntity):
     _attr_name = "Status"
-    _attr_icon = "mdi:moped"
+    _attr_icon = "mdi:map-marker-path"
 
     def __init__(self, coordinator) -> None:
         super().__init__(coordinator, "status")
