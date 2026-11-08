@@ -5,6 +5,12 @@ import html
 import re
 
 CODE_RE = re.compile(r"[0-9a-fA-F]{8}-(?:[0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}")
+# SMS texts often carry a short link (https://drd.sh/<id>) that redirects to
+# the tracking page.
+SHORT_LINK_RE = re.compile(r"(?:https?://)?drd\.sh/[A-Za-z0-9_-]+", re.I)
+PAGE_CODE_RE = re.compile(
+    r"urlCode(?:=|\\?[\"']\s*:\s*\\?[\"'])(" + CODE_RE.pattern + r")"
+)
 LABELS = {1: "CONFIRMED", 2: "TO THE STORE", 3: "ON THE WAY", 4: "DELIVERED"}
 
 STATE_IDLE = "idle"
@@ -28,6 +34,23 @@ def extract_code(value: str | None) -> str | None:
         return None
     match = CODE_RE.search(value)
     return match.group(0).lower() if match else None
+
+
+def extract_short_link(value: str | None) -> str | None:
+    """Return the first drd.sh short link in the text, as an https URL."""
+    if not value:
+        return None
+    match = SHORT_LINK_RE.search(value)
+    if not match:
+        return None
+    link = match.group(0)
+    return link if link.lower().startswith("http") else f"https://{link}"
+
+
+def extract_code_from_page(raw: str) -> str | None:
+    """Return the urlCode named in page HTML (a link or embedded JSON)."""
+    match = PAGE_CODE_RE.search(raw or "")
+    return match.group(1).lower() if match else None
 
 
 def tracking_url(code: str) -> str:
