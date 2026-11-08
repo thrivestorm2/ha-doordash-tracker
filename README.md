@@ -21,6 +21,8 @@ The integration's icon ships in `custom_components/doordash_tracker/brand/` and 
 | `button.doordash_tracker_refresh_now` | Poll the tracking page now instead of waiting for the next minute. |
 | `sensor.doordash_tracker_status` | `1`–`4` (step), `idle`, or `error`. Attributes: `label`, `detail`, `eta`, `destination` (drop-off address, when the page shows one), `tracking`. |
 
+**Entity IDs:** from v0.1.6 they're always the ones above, even if the device is in an area or renamed. Installs from older versions may have a prefix such as `text.outside_doordash_tracker_tracking_url`. Rename those to the IDs above (entity ⚙️ → Entity ID), or the iOS shortcut and the blueprint defaults won't find them.
+
 **Polling:** once a minute, only while a link is set.
 
 **Auto-reset:** the link clears itself in three cases:
@@ -72,14 +74,17 @@ You can also share a DoorDash text to the shortcut from the share sheet.
 <details>
 <summary>What the shortcut does, or how to build it yourself</summary>
 
-1. **Receive** Text from Share Sheet.
+1. **Receive** Text and URLs from Share Sheet.
 2. **Get URLs from** Shortcut Input.
 3. **Get First Item from** URLs.
-4. **Home Assistant → Perform action:** action **Set text value**, action data:
+4. **Text:**
    ```json
    {"entity_id": "text.doordash_tracker_tracking_url", "value": "<Item from List>"}
    ```
-   Insert **Item from List** as a variable between the quotes.
+   Insert **Item from List** as a variable between the last two quotes.
+5. **Home Assistant → Perform action:** action **Set text value**, with only the **Text** variable from step 4 as the action data.
+
+This is the setup confirmed working: build the JSON in its own Text step, then pass that Text variable as the whole action data.
 
 The integration finds the tracking link inside any text, so sending the whole message works too.
 </details>
