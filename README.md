@@ -17,6 +17,8 @@ The integration's icon ships in `custom_components/doordash_tracker/brand/` and 
 | Entity | Purpose |
 |---|---|
 | `text.doordash_tracker_tracking_url` | Paste the tracking link here, or call `text.set_value`. A `drd.sh` short link or the whole SMS text works too; short links are followed to find the tracking code. Clears itself when done. |
+| `button.doordash_tracker_stop_tracking` | Stop tracking now: clears the link and sets the sensor to `idle`. |
+| `button.doordash_tracker_refresh_now` | Poll the tracking page now instead of waiting for the next minute. |
 | `sensor.doordash_tracker_status` | `1`–`4` (step), `idle`, or `error`. Attributes: `label`, `detail`, `eta`, `destination` (drop-off address, when the page shows one), `tracking`. |
 
 **Polling:** once a minute, only while a link is set.
@@ -53,6 +55,8 @@ Or copy the file into your config as `blueprints/automation/doordash_tracker/ves
 **ETA rate limit:** an ETA-only change that arrives within the minimum interval (default 120 s) of the last board write is ignored. Status and label changes always go through.
 
 **Address filter:** set **Only for deliveries to this address** to the house number and street where the Note hangs, e.g. `123 Main`, and orders going anywhere else leave the board alone. Matching ignores case, spaces and punctuation, and starts at a whole word, so `12 Main` won't match `112 Main`. If the page doesn't show an address, the takeover is skipped by default; you can change that to **Show anyway**.
+
+**Stopping early:** pressing **Stop tracking** while the order is on the board hands the board back right away instead of waiting out the display time.
 
 **Exclusions:** any `input_boolean` helpers you list, such as ninja mode, storm alert or a live game, skip the takeover entirely.
 

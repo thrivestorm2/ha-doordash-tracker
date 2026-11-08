@@ -7,7 +7,7 @@ from homeassistant.core import HomeAssistant
 
 from .coordinator import DoorDashCoordinator
 
-PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.TEXT]
+PLATFORMS: list[Platform] = [Platform.BUTTON, Platform.SENSOR, Platform.TEXT]
 
 type DoorDashConfigEntry = ConfigEntry[DoorDashCoordinator]
 

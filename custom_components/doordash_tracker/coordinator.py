@@ -8,7 +8,7 @@ from datetime import datetime
 import aiohttp
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.util import dt as dt_util
@@ -89,6 +89,12 @@ class DoorDashCoordinator(DataUpdateCoordinator[dict]):
     def _clear(self) -> dict:
         self.set_url("")
         return dict(IDLE)
+
+    @callback
+    def async_stop(self) -> None:
+        """Stop tracking now: clear the link and push idle to every entity."""
+        _LOGGER.debug("Tracking stopped by request")
+        self.async_set_updated_data(self._clear())
 
     async def _async_update_data(self) -> dict:
         if not (self.url_code or self.url_short):
