@@ -7,7 +7,8 @@ blueprint:
     limited to deliveries to one address.
 
     Row 1: ETA (or DOORDASH) · Row 2: status · Row 3: 4-step progress bar
-    (green = done, yellow = current, white = pending).
+    (green = done, yellow = current, white = pending). Pressing Stop tracking
+    during a takeover hands the board back straight away.
   domain: automation
   source_url: https://github.com/thrivestorm2/ha-doordash-tracker/blob/main/blueprints/automation/doordash_tracker/vestaboard_note_display.yaml
   input:
@@ -128,8 +129,14 @@ trigger:
     entity_id: !input status_sensor
 
 condition:
+  # A step (1-4) starts or updates a takeover. Idle only gets through while a
+  # takeover is still showing (Stop tracking was pressed, or the link reset),
+  # and then hands the board back right away.
   - condition: template
-    value_template: "{{ states(status_entity) in ['1', '2', '3', '4'] }}"
+    value_template: >-
+      {{- trigger.to_state.state in ['1', '2', '3', '4']
+          or (trigger.to_state.state == 'idle'
+              and this.attributes.get('current', 0) | int(0) > 0) -}}
   - condition: template
     value_template: "{{ exclusions | select('is_state', 'on') | list | length == 0 }}"
   # Address filter: compare words of letters and digits only, so case, spacing
@@ -141,7 +148,8 @@ condition:
                      | regex_replace('[^a-z0-9]+', ' ') | trim -%}
       {%- set got = (trigger.to_state.attributes.get('destination') or '') | lower
                     | regex_replace('[^a-z0-9]+', ' ') | trim -%}
-      {{- want == ''
+      {{- trigger.to_state.state == 'idle'
+          or want == ''
           or (got != '' and (' ' ~ want) in (' ' ~ got))
           or (got == '' and unknown_destination == 'show') -}}
   # Write only when a field the board shows has changed: always for the step
@@ -166,29 +174,34 @@ condition:
       {%- endif -%}
 
 action:
-  - action: vestaboard.message
-    data:
-      device_id:
-        - !input vestaboard_device
-      message: >-
-        {%- set R = '{63}' -%}
-        {%- set G = '{66}' -%}
-        {%- set Y = '{65}' -%}
-        {%- set W = '{69}' -%}
-        {%- set step = states(status_entity) | int(0) -%}
-        {%- set label = (state_attr(status_entity, 'label') or 'DOORDASH') | upper -%}
-        {%- set eta = (state_attr(status_entity, 'eta') or '') | upper -%}
-        {%- set top = ('ETA ' ~ eta) if (eta and step < 4) else 'DOORDASH' -%}
-        {%- set row1 = R ~ (top[:13] | center(13)) ~ R -%}
-        {%- set row2 = R ~ (label[:13] | center(13)) ~ R -%}
-        {%- set ns = namespace(bar='') -%}
-        {%- for i in range(1, 5) -%}
-          {%- set c = G if (i < step or step == 4) else (Y if i == step else W) -%}
-          {%- set ns.bar = ns.bar ~ c ~ c ~ c ~ (' ' if i < 4 else '') -%}
-        {%- endfor -%}
-        {{- row1 ~ ' ' ~ row2 ~ ' ' ~ ns.bar -}}
-  - delay:
-      minutes: !input hold_minutes
+  # Skipped for idle: a stopped order goes straight to the hand-back.
+  - if:
+      - condition: template
+        value_template: "{{ trigger.to_state.state != 'idle' }}"
+    then:
+      - action: vestaboard.message
+        data:
+          device_id:
+            - !input vestaboard_device
+          message: >-
+            {%- set R = '{63}' -%}
+            {%- set G = '{66}' -%}
+            {%- set Y = '{65}' -%}
+            {%- set W = '{69}' -%}
+            {%- set step = states(status_entity) | int(0) -%}
+            {%- set label = (state_attr(status_entity, 'label') or 'DOORDASH') | upper -%}
+            {%- set eta = (state_attr(status_entity, 'eta') or '') | upper -%}
+            {%- set top = ('ETA ' ~ eta) if (eta and step < 4) else 'DOORDASH' -%}
+            {%- set row1 = R ~ (top[:13] | center(13)) ~ R -%}
+            {%- set row2 = R ~ (label[:13] | center(13)) ~ R -%}
+            {%- set ns = namespace(bar='') -%}
+            {%- for i in range(1, 5) -%}
+              {%- set c = G if (i < step or step == 4) else (Y if i == step else W) -%}
+              {%- set ns.bar = ns.bar ~ c ~ c ~ c ~ (' ' if i < 4 else '') -%}
+            {%- endfor -%}
+            {{- row1 ~ ' ' ~ row2 ~ ' ' ~ ns.bar -}}
+      - delay:
+          minutes: !input hold_minutes
   # automation.trigger keeps each automation's own conditions (exclusions,
   # ownership helpers) in force.
   - if:
