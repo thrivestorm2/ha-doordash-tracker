@@ -58,10 +58,27 @@ Or copy the file into your config as `blueprints/automation/doordash_tracker/ves
 
 ## iOS: drop the link automatically
 
-Create a Shortcuts automation with these steps:
-1. **Trigger:** Message received, with "drd.sh" in the text. Use "doordash.com/orders/drive" instead if your texts carry the long link.
-2. **Get URLs from Input.**
-3. **Home Assistant → Perform Action:** `text.set_value` on `text.doordash_tracker_tracking_url`.
+[![Add Shortcut](https://img.shields.io/badge/iOS%20Shortcut-Add%20to%20iPhone-0A84FF?logo=apple&logoColor=white)](https://www.icloud.com/shortcuts/781cb97197294756841170df2d6c30b5)
+
+1. **Add the shortcut:** tap the button above on your iPhone, then **Add Shortcut**. Choose your own Home Assistant server when asked, or the first time it runs.
+2. **Create the trigger** (Apple doesn't allow automations to be shared): Shortcuts → **Automation** → **+** → **Message** → **Message Contains** `drd.sh` → **Run Immediately** → **Run Shortcut: DoorDash → Home Assistant**, with the message as input. Use `doordash.com/orders/drive` instead if your texts carry the long link.
+
+You can also share a DoorDash text to the shortcut from the share sheet.
+
+<details>
+<summary>What the shortcut does, or how to build it yourself</summary>
+
+1. **Receive** Text from Share Sheet.
+2. **Get URLs from** Shortcut Input.
+3. **Get First Item from** URLs.
+4. **Home Assistant → Perform action:** action **Set text value**, action data:
+   ```json
+   {"entity_id": "text.doordash_tracker_tracking_url", "value": "<Item from List>"}
+   ```
+   Insert **Item from List** as a variable between the quotes.
+
+The integration finds the tracking link inside any text, so sending the whole message works too.
+</details>
 
 ## License
 
