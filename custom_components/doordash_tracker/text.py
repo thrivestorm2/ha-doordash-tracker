@@ -18,6 +18,8 @@ async def async_setup_entry(
 
 class DoorDashUrlText(DoorDashEntity, TextEntity, RestoreEntity):
     _attr_name = "Tracking URL"
+    _entity_domain = "text"
+    _object_id = "tracking_url"
     _attr_icon = "mdi:link-variant"
     _attr_mode = TextMode.TEXT
     _attr_native_min = 0

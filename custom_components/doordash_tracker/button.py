@@ -20,6 +20,8 @@ class DoorDashStopButton(DoorDashEntity, ButtonEntity):
     """Clear the tracking link and return to idle right away."""
 
     _attr_name = "Stop tracking"
+    _entity_domain = "button"
+    _object_id = "stop_tracking"
     _attr_icon = "mdi:stop-circle-outline"
 
     def __init__(self, coordinator) -> None:
@@ -33,6 +35,8 @@ class DoorDashRefreshButton(DoorDashEntity, ButtonEntity):
     """Poll the tracking page now instead of waiting for the next interval."""
 
     _attr_name = "Refresh now"
+    _entity_domain = "button"
+    _object_id = "refresh_now"
     _attr_icon = "mdi:refresh"
 
     def __init__(self, coordinator) -> None:
