@@ -18,7 +18,7 @@ from .parser import STATE_ERROR, STATE_IDLE, extract_code, parse, tracking_url
 
 _LOGGER = logging.getLogger(__name__)
 
-IDLE = {"state": STATE_IDLE, "label": "", "detail": "", "eta": ""}
+IDLE = {"state": STATE_IDLE, "label": "", "detail": "", "eta": "", "destination": ""}
 
 
 class DoorDashCoordinator(DataUpdateCoordinator[dict]):

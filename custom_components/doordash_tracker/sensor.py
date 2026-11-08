@@ -33,5 +33,6 @@ class DoorDashStatusSensor(DoorDashEntity, SensorEntity):
             "label": data.get("label", ""),
             "detail": data.get("detail", ""),
             "eta": data.get("eta", ""),
+            "destination": data.get("destination", ""),
             "tracking": self.coordinator.url_code is not None,
         }
