@@ -1,6 +1,6 @@
 # DoorDash Tracker for Home Assistant
 
-Follow a **DoorDash Drive** tracking link (the `doordash.com/orders/drive?urlCode=…` link sent by SMS) inside Home Assistant, with an optional blueprint that shows a temporary takeover on a **Vestaboard Note**.
+Follow a **DoorDash Drive** tracking link (the `drd.sh/…` short link or `doordash.com/orders/drive?urlCode=…` link sent by SMS) inside Home Assistant, with an optional blueprint that shows a temporary takeover on a **Vestaboard Note**.
 
 > Unofficial. DoorDash has no consumer API; this reads the public tracking page that the link opens. It works only for Drive links (merchant-dispatched orders), not orders placed in the DoorDash app.
 
@@ -16,7 +16,7 @@ The integration's icon ships in `custom_components/doordash_tracker/brand/` and 
 
 | Entity | Purpose |
 |---|---|
-| `text.doordash_tracker_tracking_url` | Paste the tracking link here, or call `text.set_value`. Clears itself when done. |
+| `text.doordash_tracker_tracking_url` | Paste the tracking link here, or call `text.set_value`. A `drd.sh` short link or the whole SMS text works too; short links are followed to find the tracking code. Clears itself when done. |
 | `sensor.doordash_tracker_status` | `1`–`4` (step), `idle`, or `error`. Attributes: `label`, `detail`, `eta`, `destination` (drop-off address, when the page shows one), `tracking`. |
 
 **Polling:** once a minute, only while a link is set.
@@ -59,7 +59,7 @@ Or copy the file into your config as `blueprints/automation/doordash_tracker/ves
 ## iOS: drop the link automatically
 
 Create a Shortcuts automation with these steps:
-1. **Trigger:** Message received, with "doordash.com/orders/drive" in the text.
+1. **Trigger:** Message received, with "drd.sh" in the text. Use "doordash.com/orders/drive" instead if your texts carry the long link.
 2. **Get URLs from Input.**
 3. **Home Assistant → Perform Action:** `text.set_value` on `text.doordash_tracker_tracking_url`.
 

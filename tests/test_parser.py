@@ -77,3 +77,31 @@ def test_destination_from_embedded_json():
 def test_destination_missing():
     r = parser.parse("<div>Step 4 out of 4</div><p>Your order was delivered.</p>")
     assert r["destination"] == ""
+
+
+# Sample short link only. Never put a real tracking link in this repo.
+SHORT = "https://drd.sh/AbCdEfGh1234xyz"
+
+
+def test_extract_short_link_from_sms_text():
+    text = "Your Sample Store order has been confirmed. Track status: " + SHORT
+    assert parser.extract_code(text) is None
+    assert parser.extract_short_link(text) == SHORT
+
+
+def test_extract_short_link_without_scheme():
+    assert parser.extract_short_link("track: drd.sh/AbCd_12-x") == "https://drd.sh/AbCd_12-x"
+
+
+def test_extract_short_link_none():
+    assert parser.extract_short_link("") is None
+    assert parser.extract_short_link("https://example.com/x") is None
+
+
+def test_extract_code_from_page_link_and_json():
+    assert parser.extract_code_from_page(
+        '<link rel="canonical" href="https://www.doordash.com/orders/drive?urlCode=' + CODE + '">'
+    ) == CODE
+    assert parser.extract_code_from_page('{"urlCode":"' + CODE.upper() + '"}') == CODE
+    assert parser.extract_code_from_page('{\\"urlCode\\":\\"' + CODE + '\\"}') == CODE
+    assert parser.extract_code_from_page("<p>" + CODE + "</p>") is None
