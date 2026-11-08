@@ -3,7 +3,8 @@ blueprint:
   description: >-
     On each DoorDash status, label or ETA change, shows the update on a Vestaboard Note
     (15×3) for a few minutes, then hands the board back to your regular
-    automations. Skipped while any exclusion helper is on.
+    automations. Skipped while any exclusion helper is on, and optionally
+    limited to deliveries to one address.
 
     Row 1: ETA (or DOORDASH) · Row 2: status · Row 3: 4-step progress bar
     (green = done, yellow = current, white = pending).
@@ -36,6 +37,28 @@ blueprint:
           multiple: true
           filter:
             - domain: input_boolean
+    destination_filter:
+      name: Only for deliveries to this address
+      description: >-
+        Leave empty to show every delivery. Otherwise the board is used only
+        when the order's drop-off address (the sensor's destination attribute)
+        contains this text. Case, spaces and punctuation are ignored. Enter the
+        house number and street name, e.g. "123 Main", so "St" vs "Street"
+        doesn't matter.
+      default: ""
+      selector:
+        text: {}
+    unknown_destination:
+      name: If the drop-off address can't be read
+      description: Only applies when an address is set above.
+      default: skip
+      selector:
+        select:
+          options:
+            - label: Skip the board
+              value: skip
+            - label: Show anyway
+              value: show
     hold_minutes:
       name: Display time (minutes)
       default: 3
@@ -92,6 +115,8 @@ variables:
   night_automation: !input night_automation
   day_automation: !input day_automation
   min_eta_interval: !input min_eta_interval
+  destination_filter: !input destination_filter
+  unknown_destination: !input unknown_destination
   # An unset entity input stays as its default [], a chosen one is a string.
   has_night_automation: "{{ night_automation is string and night_automation != '' }}"
   has_day_automation: "{{ day_automation is string and day_automation != '' }}"
@@ -107,6 +132,18 @@ condition:
     value_template: "{{ states(status_entity) in ['1', '2', '3', '4'] }}"
   - condition: template
     value_template: "{{ exclusions | select('is_state', 'on') | list | length == 0 }}"
+  # Address filter: compare words of letters and digits only, so case, spacing
+  # and punctuation don't matter. The match must start at a word, so "12 Main"
+  # doesn't match "112 Main".
+  - condition: template
+    value_template: >-
+      {%- set want = (destination_filter or '') | lower
+                     | regex_replace('[^a-z0-9]+', ' ') | trim -%}
+      {%- set got = (trigger.to_state.attributes.get('destination') or '') | lower
+                    | regex_replace('[^a-z0-9]+', ' ') | trim -%}
+      {{- want == ''
+          or (got != '' and (' ' ~ want) in (' ' ~ got))
+          or (got == '' and unknown_destination == 'show') -}}
   # Write only when a field the board shows has changed: always for the step
   # or label, and for an ETA-only change once min_eta_interval has passed since
   # the last write. The detail and tracking attributes are ignored. Conditions
