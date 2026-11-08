@@ -64,7 +64,7 @@ Or copy the file into your config as `blueprints/automation/doordash_tracker/ves
 
 ## iOS: drop the link automatically
 
-[![Add Shortcut](https://img.shields.io/badge/iOS%20Shortcut-Add%20to%20iPhone-0A84FF?logo=apple&logoColor=white)](https://www.icloud.com/shortcuts/781cb97197294756841170df2d6c30b5)
+[![Add Shortcut](https://img.shields.io/badge/iOS%20Shortcut-Add%20to%20iPhone-0A84FF?logo=apple&logoColor=white)](https://www.icloud.com/shortcuts/33705eb0d65b4394bebd220537887b53)
 
 1. **Add the shortcut:** tap the button above on your iPhone, then **Add Shortcut**. Choose your own Home Assistant server when asked, or the first time it runs.
 2. **Create the trigger** (Apple doesn't allow automations to be shared): Shortcuts → **Automation** → **+** → **Message** → **Message Contains** `drd.sh` → **Run Immediately** → **Run Shortcut: DoorDash → Home Assistant**, with the message as input. Use `doordash.com/orders/drive` instead if your texts carry the long link.
